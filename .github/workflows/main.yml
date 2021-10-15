@@ -15,9 +15,10 @@ jobs:
       with:
         dotnet-version: 3.1.101
     - name: Move Directory
-      run: cd Parcelamento
+      run: ls 
+          cd Parcelamento
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore .\Parcelamento.sln
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Publish Parcelamento
