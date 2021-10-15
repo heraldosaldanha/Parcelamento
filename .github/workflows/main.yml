@@ -14,9 +14,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
-    - name: Move Directory
-      run: ls 
-          cd Parcelamento
+    - name: Directory
+      run: ls
     - name: Install dependencies
       run: dotnet restore .\Parcelamento.sln
     - name: Build
