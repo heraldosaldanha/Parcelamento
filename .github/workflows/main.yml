@@ -15,7 +15,8 @@ jobs:
       with:
         dotnet-version: 3.1.101
     - name: Directory
-      run: cd ./Parcelamento
+      run: |
+        cd ./Parcelamento
         ls
     - name: Install dependencies
       run: dotnet restore ./Parcelamento.sln
