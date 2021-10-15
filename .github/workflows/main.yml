@@ -19,7 +19,10 @@ jobs:
         cd ./Parcelamento
         ls
     - name: Install dependencies
-      run: dotnet restore
+      run: |
+        ls
+        cd ./Parcelamento
+        dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Publish Parcelamento
