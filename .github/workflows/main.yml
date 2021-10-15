@@ -14,19 +14,12 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
-    - name: Directory
-      run: |
-        cd ./Parcelamento
-        ls
     - name: Install dependencies
-      run: |
-        ls
-        cd ./Parcelamento
-        dotnet restore
+      run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Publish Parcelamento
       uses: brandedoutcast/publish-nuget@v2.5.2
       with:
-          PROJECT_FILE_PATH: Parcelamento\Parcelamento\Parcelamento.csproj
+          PROJECT_FILE_PATH: Parcelamento/Parcelamento.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
