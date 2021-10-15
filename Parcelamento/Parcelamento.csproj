@@ -7,6 +7,8 @@
     <Authors>Heraldo Saldanha</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/heraldosaldanha/Parcelamento</RepositoryUrl>
+    <PackageProjectUrl>https://www.nuget.org/packages/Parcelamento/ss</PackageProjectUrl>
+    <Description>Biblioteca para realizar parcelamento de valor financeiro.</Description>
   </PropertyGroup>
 
   <ItemGroup>
