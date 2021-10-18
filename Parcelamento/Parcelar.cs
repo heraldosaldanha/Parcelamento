@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Parcelamento
 {
@@ -13,13 +14,17 @@ namespace Parcelamento
         /// <returns>SortedDictionary<int, decimal> id parcela / valor parcela</returns>
         public static SortedDictionary<int, decimal> RestoPrimeiraParcela(decimal valor, int quantidadeParcelas)
         {
-            var parcelamento = Simples(valor, quantidadeParcelas);
-            if (parcelamento.resto > 0)
-            {
-                parcelamento.parcelas[1] = parcelamento.parcelas[1] + parcelamento.resto;
-            }
+            return Simples(valor, quantidadeParcelas, 
+                (parcelas, resto) =>
+                {
+                    if (resto > 0)
+                    {
+                        parcelas[1] = parcelas[1] + resto;
+                    }
+                    return parcelas;
+                }
+            );
 
-            return parcelamento.parcelas;
         }
 
         /// <summary>
@@ -30,15 +35,18 @@ namespace Parcelamento
         /// <returns>SortedDictionary<int, decimal> id parcela / valor parcela</returns>
         public static SortedDictionary<int, decimal> RestoUltimaParcela(decimal valor, int quantidadeParcelas)
         {
-            var parcelamento = Simples(valor, quantidadeParcelas);
+            return Simples(valor, quantidadeParcelas,
+                (parcelas, resto) =>
+                {
 
-            if (parcelamento.resto > 0)
-            {
-                var idParcela = parcelamento.parcelas.Count;
-                parcelamento.parcelas[idParcela] = parcelamento.parcelas[idParcela] + parcelamento.resto;
-            }
+                    if (resto > 0)
+                    {
+                        var idParcela = parcelas.Count;
+                        parcelas[idParcela] = parcelas[idParcela] + resto;
+                    }
 
-            return parcelamento.parcelas;
+                    return parcelas;
+                });
         }
 
         /// <summary>
@@ -49,23 +57,26 @@ namespace Parcelamento
         /// <returns>SortedDictionary<int, decimal> id parcela / valor parcela</returns>
         public static SortedDictionary<int, decimal> RestoRateadoEntreParcelasCrescente(decimal valor, int quantidadeParcelas)
         {
-            var parcelamento = Simples(valor, quantidadeParcelas);
-
-            if (parcelamento.resto > 0)
-            {
-                var ultimaParcela = parcelamento.parcelas.Count;
-                var idParcela = 0;
-                for (int i = (int)Math.Truncate(parcelamento.resto * 100); i > 0; i--)
+            return Simples(valor, quantidadeParcelas,
+                (parcelas, resto) =>
                 {
-                    idParcela++;
 
-                    parcelamento.parcelas[idParcela] = parcelamento.parcelas[idParcela] + 0.01M;
-                    if (idParcela == ultimaParcela)
-                        idParcela = 0;
-                }
-            }
+                    if (resto > 0)
+                    {
+                        var ultimaParcela = parcelas.Count;
+                        var idParcela = 0;
+                        for (int i = (int)Math.Truncate(resto * 100); i > 0; i--)
+                        {
+                            idParcela++;
 
-            return parcelamento.parcelas;
+                            parcelas[idParcela] = parcelas[idParcela] + 0.01M;
+                            if (idParcela == ultimaParcela)
+                                idParcela = 1;
+                        }
+                    }
+
+                    return parcelas;
+                });
         }
 
         /// <summary>
@@ -76,38 +87,40 @@ namespace Parcelamento
         /// <returns>SortedDictionary<int, decimal> id parcela / valor parcela</returns>
         public static SortedDictionary<int, decimal> RestoRateadoEntreParcelasDecrescente(decimal valor, int quantidadeParcelas)
         {
-            var parcelamento = Simples(valor, quantidadeParcelas);
-
-            if (parcelamento.resto > 0)
+            return Simples(valor, quantidadeParcelas, (parcelas, resto) =>
             {
-                var ultimaParcela = parcelamento.parcelas.Count;
-                var idParcela = ultimaParcela;
-                for (int i = (int)Math.Truncate(parcelamento.resto * 100); i > 0; i--)
+                if (resto > 0)
                 {
-                    parcelamento.parcelas[idParcela] = parcelamento.parcelas[idParcela] + 0.01M;
+                    var ultimaParcela = parcelas.Count;
+                    var idParcela = ultimaParcela;
+                    for (int i = (int)Math.Truncate(resto * 100); i > 0; i--)
+                    {
+                        parcelas[idParcela] = parcelas[idParcela] + 0.01M;
 
-                    idParcela--;
+                        idParcela--;
 
-                    if (idParcela == 1)
-                        idParcela = ultimaParcela + 1;
+                        if (idParcela == 0)
+                            idParcela = ultimaParcela;
+                    }
                 }
-            }
-
-            return parcelamento.parcelas;
+                return parcelas;
+            });
         }
 
-        private static (SortedDictionary<int, decimal> parcelas, decimal resto) Simples(decimal valor, int quantidadeParcelas)
+        private static SortedDictionary<int, decimal> Simples(decimal valor, int quantidadeParcelas, Func<SortedDictionary<int, decimal>, decimal, SortedDictionary<int, decimal>> rateio)
         {
+            var valorModulo = Math.Abs(valor);
+
             var parcelas = new SortedDictionary<int, decimal>();
             decimal valorTotal = 0;
             if (quantidadeParcelas <= 1)
             {
-                parcelas.Add(1, valor);
-                valorTotal = valor;
+                parcelas.Add(1, valorModulo);
+                valorTotal = valorModulo;
             }
             else
             {
-                decimal valorParcela = Math.Truncate((valor / (decimal)quantidadeParcelas) * 100) / 100;
+                decimal valorParcela = Math.Truncate((valorModulo / (decimal)quantidadeParcelas) * 100) / 100;
 
                 for (var i = 1; i <= quantidadeParcelas; i++)
                 {
@@ -116,9 +129,19 @@ namespace Parcelamento
                 }
             }
 
-            decimal resto = valor - valorTotal;
+            decimal resto = valorModulo - valorTotal;
 
-            return (parcelas, resto);
+            parcelas = rateio(parcelas, resto);
+
+            if (valor < 0)
+            {
+                parcelas.Keys.ToList().ForEach(key =>
+                {
+                    parcelas[key] = parcelas[key] * -1;
+                });
+            }
+
+            return parcelas;
         }
     }
 }
